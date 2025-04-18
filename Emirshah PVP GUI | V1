@@ -1,0 +1,317 @@
+# Rewriting the file after code execution environment reset
+
+script_content = """
+
+-- Emirshah PVP GUI | V1
+
+
+
+local Players = game:GetService("Players")
+
+local RunService = game:GetService("RunService")
+
+local TweenService = game:GetService("TweenService")
+
+local LocalPlayer = Players.LocalPlayer
+
+
+
+-- GUI Setup
+
+local gui = Instance.new("ScreenGui", game.CoreGui)
+
+gui.Name = "EmirshahGUI"
+
+
+
+local frame = Instance.new("Frame")
+
+frame.Size = UDim2.new(0, 200, 0, 200)
+
+frame.Position = UDim2.new(0.5, -100, 0.5, -100)
+
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+
+frame.Active = true
+
+frame.Draggable = true
+
+frame.Parent = gui
+
+
+
+local corner = Instance.new("UICorner")
+
+corner.CornerRadius = UDim.new(0, 8)
+
+corner.Parent = frame
+
+
+
+-- Close Button
+
+local close = Instance.new("TextButton")
+
+close.Size = UDim2.new(0, 20, 0, 20)
+
+close.Position = UDim2.new(1, -22, 0, 2)
+
+close.Text = "X"
+
+close.Parent = frame
+
+close.MouseButton1Click:Connect(function()
+
+    gui:Destroy()
+
+end)
+
+
+
+-- Minimize Button
+
+local minimize = Instance.new("TextButton")
+
+minimize.Size = UDim2.new(0, 20, 0, 20)
+
+minimize.Position = UDim2.new(1, -44, 0, 2)
+
+minimize.Text = "-"
+
+minimize.Parent = frame
+
+
+
+local minimized = false
+
+minimize.MouseButton1Click:Connect(function()
+
+    minimized = not minimized
+
+    frame.Size = minimized and UDim2.new(0, 200, 0, 30) or UDim2.new(0, 200, 0, 200)
+
+end)
+
+
+
+-- Hitbox Controls
+
+local hitboxToggle = Instance.new("TextButton")
+
+hitboxToggle.Size = UDim2.new(0, 180, 0, 30)
+
+hitboxToggle.Position = UDim2.new(0, 10, 0, 30)
+
+hitboxToggle.Text = "Enable Hitbox"
+
+hitboxToggle.Parent = frame
+
+
+
+local hitboxSizeBox = Instance.new("TextBox")
+
+hitboxSizeBox.Size = UDim2.new(0, 180, 0, 30)
+
+hitboxSizeBox.Position = UDim2.new(0, 10, 0, 65)
+
+hitboxSizeBox.Text = "15"
+
+hitboxSizeBox.Parent = frame
+
+
+
+local hitboxEnabled = false
+
+local headSize = 15
+
+
+
+hitboxToggle.MouseButton1Click:Connect(function()
+
+    hitboxEnabled = not hitboxEnabled
+
+    hitboxToggle.Text = hitboxEnabled and "Disable Hitbox" or "Enable Hitbox"
+
+end)
+
+
+
+hitboxSizeBox.FocusLost:Connect(function()
+
+    local val = tonumber(hitboxSizeBox.Text)
+
+    if val then headSize = val end
+
+end)
+
+
+
+-- ESP and Tracer Setup
+
+local espEnabled = false
+
+local tracerEnabled = false
+
+
+
+local espToggle = Instance.new("TextButton")
+
+espToggle.Size = UDim2.new(0, 180, 0, 30)
+
+espToggle.Position = UDim2.new(0, 10, 0, 100)
+
+espToggle.Text = "Enable ESP"
+
+espToggle.Parent = frame
+
+
+
+local tracerToggle = Instance.new("TextButton")
+
+tracerToggle.Size = UDim2.new(0, 180, 0, 30)
+
+tracerToggle.Position = UDim2.new(0, 10, 0, 135)
+
+tracerToggle.Text = "Enable Tracer"
+
+tracerToggle.Parent = frame
+
+
+
+espToggle.MouseButton1Click:Connect(function()
+
+    espEnabled = not espEnabled
+
+    espToggle.Text = espEnabled and "Disable ESP" or "Enable ESP"
+
+end)
+
+
+
+tracerToggle.MouseButton1Click:Connect(function()
+
+    tracerEnabled = not tracerEnabled
+
+    tracerToggle.Text = tracerEnabled and "Disable Tracer" or "Enable Tracer"
+
+end)
+
+
+
+-- Main loop
+
+RunService.RenderStepped:Connect(function()
+
+    for _, player in pairs(Players:GetPlayers()) do
+
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+
+            local part = player.Character.HumanoidRootPart
+
+
+
+            -- Hitbox
+
+            if hitboxEnabled then
+
+                part.Size = Vector3.new(headSize, headSize, headSize)
+
+                part.Transparency = 0.5
+
+                part.BrickColor = BrickColor.new("Bright red")
+
+                part.Material = Enum.Material.Neon
+
+                part.CanCollide = false
+
+            else
+
+                part.Size = Vector3.new(2, 2, 1)
+
+                part.Transparency = 1
+
+            end
+
+
+
+            -- ESP
+
+            if espEnabled and not player.Character:FindFirstChild("ESPBox") then
+
+                local espPart = Instance.new("BillboardGui", player.Character)
+
+                espPart.Name = "ESPBox"
+
+                espPart.Size = UDim2.new(0, 200, 0, 50)
+
+                espPart.StudsOffset = Vector3.new(0, 3, 0)
+
+                espPart.AlwaysOnTop = true
+
+
+
+                local label = Instance.new("TextLabel", espPart)
+
+                label.Size = UDim2.new(1, 0, 1, 0)
+
+                label.BackgroundTransparency = 1
+
+                label.Text = player.Name
+
+                label.TextColor3 = Color3.new(1, 1, 1)
+
+                label.TextStrokeTransparency = 0
+
+            end
+
+
+
+            -- Tracer
+
+            if tracerEnabled and not player.Character:FindFirstChild("TracerLine") then
+
+                local attach0 = Instance.new("Attachment", workspace.CurrentCamera)
+
+                local attach1 = Instance.new("Attachment", part)
+
+
+
+                local beam = Instance.new("Beam")
+
+                beam.Attachment0 = attach0
+
+                beam.Attachment1 = attach1
+
+                beam.FaceCamera = true
+
+                beam.Width0 = 0.1
+
+                beam.Width1 = 0.1
+
+                beam.Color = ColorSequence.new(Color3.new(1, 0, 0))
+
+                beam.Parent = part
+
+                beam.Name = "TracerLine"
+
+            end
+
+        end
+
+    end
+
+end)
+
+"""
+
+
+
+with open("/mnt/data/Emirshah_PVP_GUI_V1.lua", "w") as f:
+
+    f.write(script_content)
+
+
+
+"/mnt/data/Emirshah_PVP_GUI_V1.lua"
+
+
