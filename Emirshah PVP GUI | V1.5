@@ -1,0 +1,209 @@
+-- Emirshah PVP GUI | V1.5
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- SETTINGS
+_G.HitboxSize = 20
+_G.ReachDistance = 5
+_G.HitboxEnabled = false
+_G.ESPEnabled = false
+_G.TracerEnabled = false
+_G.ReachEnabled = false
+_G.NameTagsEnabled = false
+_G.NoClipEnabled = false
+
+-- GUI
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "EmirshahPVP"
+
+local dragFrame = Instance.new("Frame", gui)
+dragFrame.Size = UDim2.new(0, 320, 0, 35)
+dragFrame.Position = UDim2.new(0.5, -160, 0.5, -180)
+dragFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+dragFrame.Active = true
+dragFrame.Draggable = true
+
+local main = Instance.new("ScrollingFrame", dragFrame)
+main.Size = UDim2.new(1, 0, 0, 265)
+main.Position = UDim2.new(0, 0, 1, 0)
+main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+main.BorderSizePixel = 0
+main.CanvasSize = UDim2.new(0, 0, 0, 700)
+main.ScrollBarThickness = 5
+
+-- GUI NAME TITLE
+local title = Instance.new("TextLabel", dragFrame)
+title.Size = UDim2.new(1, -70, 1, 0)
+title.Position = UDim2.new(0, 10, 0, 0)
+title.Text = "Emirshah PVP GUI | V1.5"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 14
+title.TextXAlignment = Enum.TextXAlignment.Left
+
+-- CLOSE BUTTON (X)
+local close = Instance.new("TextButton", dragFrame)
+close.Size = UDim2.new(0, 25, 0, 25)
+close.Position = UDim2.new(1, -30, 0, 5)
+close.Text = "X"
+close.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+close.TextColor3 = Color3.new(1,1,1)
+close.Font = Enum.Font.GothamBold
+close.TextSize = 14
+close.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+-- MINIMIZE BUTTON (-)
+local minimize = Instance.new("TextButton", dragFrame)
+minimize.Size = UDim2.new(0, 25, 0, 25)
+minimize.Position = UDim2.new(1, -60, 0, 5)
+minimize.Text = "-"
+minimize.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+minimize.TextColor3 = Color3.new(1,1,1)
+minimize.Font = Enum.Font.GothamBold
+minimize.TextSize = 14
+
+local minimized = false
+minimize.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    main.Visible = not minimized
+end)
+
+-- Y Offset
+local yPos = 10
+
+-- UI Element Functions
+local function createTextbox(label, default, callback)
+    local box = Instance.new("TextBox", main)
+    box.Size = UDim2.new(0, 290, 0, 25)
+    box.Position = UDim2.new(0, 15, 0, yPos)
+    box.PlaceholderText = label
+    box.Text = tostring(default)
+    box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    box.TextColor3 = Color3.new(1, 1, 1)
+    box.FocusLost:Connect(function()
+        local val = tonumber(box.Text)
+        if val then callback(val) end
+    end)
+    yPos += 35
+end
+
+local function createToggle(name, callback)
+    local btn = Instance.new("TextButton", main)
+    btn.Size = UDim2.new(0, 290, 0, 30)
+    btn.Position = UDim2.new(0, 15, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Text = "Enable " .. name
+    local state = false
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = (state and "Disable " or "Enable ") .. name
+        callback(state)
+    end)
+    yPos += 35
+end
+
+-- Create Inputs
+createTextbox("Hitbox Size", _G.HitboxSize, function(v) _G.HitboxSize = v end)
+createTextbox("Reach Distance", _G.ReachDistance, function(v) _G.ReachDistance = v end)
+
+createToggle("Hitbox", function(state) _G.HitboxEnabled = state end)
+createToggle("ESP", function(state) _G.ESPEnabled = state end)
+createToggle("Tracer", function(state) _G.TracerEnabled = state end)
+createToggle("Reach", function(state) _G.ReachEnabled = state end)
+createToggle("NameTags", function(state) _G.NameTagsEnabled = state end)
+createToggle("NoClip", function(state) _G.NoClipEnabled = state end)
+
+-- Functions
+local function updateVisuals()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            local char = plr.Character
+            local head = char:FindFirstChild("Head")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+
+            -- ESP
+            if head and _G.ESPEnabled and not head:FindFirstChild("ESP") then
+                local esp = Instance.new("BillboardGui", head)
+                esp.Name = "ESP"
+                esp.Size = UDim2.new(0, 100, 0, 40)
+                esp.AlwaysOnTop = true
+                local label = Instance.new("TextLabel", esp)
+                label.Size = UDim2.new(1, 0, 1, 0)
+                label.BackgroundTransparency = 1
+                label.TextColor3 = Color3.new(1, 1, 1)
+                label.Text = plr.Name
+                label.TextSize = 14
+            elseif head and not _G.ESPEnabled and head:FindFirstChild("ESP") then
+                head.ESP:Destroy()
+            end
+
+            -- Tracer
+            if head and hrp and _G.TracerEnabled then
+                if not head:FindFirstChild("Tracer") then
+                    local a0 = Instance.new("Attachment", head)
+                    local a1 = Instance.new("Attachment", LocalPlayer.Character:WaitForChild("HumanoidRootPart"))
+                    local beam = Instance.new("Beam", head)
+                    beam.Attachment0 = a0
+                    beam.Attachment1 = a1
+                    beam.Name = "Tracer"
+                    beam.Width0 = 0.1
+                    beam.Width1 = 0.1
+                    beam.Color = ColorSequence.new(Color3.new(1,1,1))
+                    beam.FaceCamera = true
+                end
+            elseif head and head:FindFirstChild("Tracer") and not _G.TracerEnabled then
+                head.Tracer:Destroy()
+            end
+
+            -- Hitbox
+            if hrp and _G.HitboxEnabled then
+                hrp.Size = Vector3.new(_G.HitboxSize, _G.HitboxSize, _G.HitboxSize)
+                hrp.Transparency = 0.4
+                hrp.BrickColor = BrickColor.Red()
+                hrp.Material = Enum.Material.ForceField
+                hrp.CanCollide = false
+            elseif hrp then
+                hrp.Size = Vector3.new(2, 2, 1)
+                hrp.Transparency = 1
+            end
+        end
+    end
+end
+
+local function applyReach()
+    if _G.ReachEnabled then
+        for _, tool in ipairs(LocalPlayer.Character:GetChildren()) do
+            if tool:IsA("Tool") and tool:FindFirstChild("Handle") then
+                tool.Handle.Size = Vector3.new(_G.ReachDistance, _G.ReachDistance, _G.ReachDistance)
+                tool.Handle.Transparency = 0.5
+                tool.Handle.Color = Color3.fromRGB(255, 255, 0)
+            end
+        end
+    end
+end
+
+-- NoClip Handling
+RunService.Stepped:Connect(function()
+    if _G.NoClipEnabled then
+        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide == true then
+                v.CanCollide = false
+            end
+        end
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    pcall(function()
+        updateVisuals()
+        applyReach()
+    end)
+end)
